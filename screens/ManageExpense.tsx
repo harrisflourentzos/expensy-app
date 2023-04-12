@@ -1,7 +1,6 @@
 import { useContext, useLayoutEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import Button from "../components/UI/Button";
 import IconButton from "../components/UI/IconButton";
 import { GlobalStyles } from "../constants/styles";
 import { ExpensesContext } from "../store/expenses-context";
@@ -14,6 +13,8 @@ function ManageExpense({ route, navigation }: ManageExpenseStackScreenProps) {
 
   const editedExpenseId = route.params?.expenseId;
   const isEditing = !!editedExpenseId;
+  const expense = expensesCtx.expenses.find((e) => e.id === editedExpenseId);
+  console.log(expense);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -43,6 +44,7 @@ function ManageExpense({ route, navigation }: ManageExpenseStackScreenProps) {
     <View style={styles.container}>
       <ExpenseForm
         isEditing={isEditing}
+        editingExpense={expense}
         onConfirm={confirmHandler}
         onCancel={cancelHandler}
       />

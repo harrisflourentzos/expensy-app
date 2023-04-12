@@ -58,23 +58,6 @@ const DUMMY_EXPENSES: IExpenseItem[] = [
   },
 ];
 
-type ExpensesContextType = {
-  expenses: IExpenseItem[];
-  addExpense: (expense: IExpense) => void;
-  deleteExpense: (id: string) => void;
-  updateExpense: (id: string, updateExpense: IExpense) => void;
-};
-
-const INITIAL_STATE: ExpensesContextType = {
-  expenses: [] as IExpenseItem[],
-  addExpense: (expense) => {},
-  deleteExpense: (id) => {},
-  updateExpense: (id, updateExpense) => {},
-};
-
-export const ExpensesContext =
-  createContext<ExpensesContextType>(INITIAL_STATE);
-
 enum ActionType {
   ADD = "ADD",
   UPDATE = "UPDATE",
@@ -95,8 +78,9 @@ function expensesReducer(state: IExpenseItem[], action: Action) {
   switch (type) {
     case ActionType.ADD:
       const id = new Date().toString() + Math.random().toString();
+      const newExpense = { ...data.expense, id: id };
 
-      return [{ ...data.expense, id: id }, ...state];
+      return [newExpense, ...state];
     case ActionType.UPDATE:
       const updatableExpenseIndex = state.findIndex(
         (expense) => expense.id === data.id
@@ -113,6 +97,23 @@ function expensesReducer(state: IExpenseItem[], action: Action) {
       return state;
   }
 }
+
+type ExpensesContextType = {
+  expenses: IExpenseItem[];
+  addExpense: (expense: IExpense) => void;
+  deleteExpense: (id: string) => void;
+  updateExpense: (id: string, updateExpense: IExpense) => void;
+};
+
+const INITIAL_STATE: ExpensesContextType = {
+  expenses: [] as IExpenseItem[],
+  addExpense: (expense) => {},
+  deleteExpense: (id) => {},
+  updateExpense: (id, updateExpense) => {},
+};
+
+export const ExpensesContext =
+  createContext<ExpensesContextType>(INITIAL_STATE);
 
 function ExpensesContextProvider({ children }: { children: JSX.Element }) {
   const [expensesState, dispatch] = useReducer(expensesReducer, DUMMY_EXPENSES);

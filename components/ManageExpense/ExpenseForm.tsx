@@ -1,25 +1,43 @@
 import { StyleSheet, View } from "react-native";
 import React, { useState } from "react";
 import Input from "./Input";
-import { IExpense } from "../../model/expense";
+import { IExpense, IExpenseItem } from "../../model/expense";
 import Button from "../UI/Button";
+import { getFormattedDate } from "../../util/date";
 
 type Props = {
   isEditing: boolean;
+  editingExpense?: IExpenseItem;
   onConfirm: (expense: IExpense) => void;
   onCancel: () => void;
 };
 
-interface IExpenseUpdate {
-  amount: string;
-  date: string;
-  description: string;
+enum ExpenseUpdateType {
+  amount = "amount",
+  date = "date",
+  description = "description",
 }
 
-const ExpenseForm = ({ isEditing, onCancel, onConfirm }: Props) => {
-  const [expenseUpdate, setExpenseUpdate] = useState<IExpenseUpdate>(
-    {} as IExpenseUpdate
-  );
+interface IExpenseUpdate {
+  [ExpenseUpdateType.amount]: string;
+  [ExpenseUpdateType.date]: string;
+  [ExpenseUpdateType.description]: string;
+}
+
+const ExpenseForm = ({
+  isEditing,
+  editingExpense,
+  onCancel,
+  onConfirm,
+}: Props) => {
+  const Initial_State = {
+    amount: editingExpense ? editingExpense?.amount.toString() : "",
+    date: editingExpense ? getFormattedDate(editingExpense?.date) : "",
+    description: editingExpense ? editingExpense?.description : "",
+  } as IExpenseUpdate;
+
+  const [expenseUpdate, setExpenseUpdate] =
+    useState<IExpenseUpdate>(Initial_State);
 
   function updateExpense(updateId: string, update: string) {
     setExpenseUpdate((e) => {
@@ -30,7 +48,7 @@ const ExpenseForm = ({ isEditing, onCancel, onConfirm }: Props) => {
   function confirmHandler() {
     const amount = parseInt(expenseUpdate.amount);
     const date = new Date(expenseUpdate.date);
-    const description = expenseUpdate.amount;
+    const description = expenseUpdate.description;
 
     // Todo: VALIDATION
 
@@ -51,7 +69,7 @@ const ExpenseForm = ({ isEditing, onCancel, onConfirm }: Props) => {
           label="Amount"
           textInputConfig={{
             keyboardType: "decimal-pad",
-            onChangeText: updateExpense.bind(this, "amount"),
+            onChangeText: updateExpense.bind(this, ExpenseUpdateType.amount),
             value: expenseUpdate.amount,
           }}
         />
@@ -61,7 +79,7 @@ const ExpenseForm = ({ isEditing, onCancel, onConfirm }: Props) => {
           textInputConfig={{
             placeholder: "YYYY-MM-DD",
             maxLength: 10,
-            onChangeText: updateExpense.bind(this, "date"),
+            onChangeText: updateExpense.bind(this, ExpenseUpdateType.date),
             value: expenseUpdate.date,
           }}
         />
@@ -71,7 +89,7 @@ const ExpenseForm = ({ isEditing, onCancel, onConfirm }: Props) => {
         textInputConfig={{
           multiline: true,
           autoCorrect: false,
-          onChangeText: updateExpense.bind(this, "description"),
+          onChangeText: updateExpense.bind(this, ExpenseUpdateType.description),
           value: expenseUpdate.description,
         }}
       />
