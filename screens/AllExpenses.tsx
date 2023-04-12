@@ -2,7 +2,6 @@ import { useContext } from "react";
 
 import ExpensesOutput from "../components/ExpensesOutput/ExpensesOutput";
 import { ExpensesContext } from "../store/expenses-context";
-import { HomeTabScreenProps } from "../navigation/types";
 
 function AllExpenses() {
   const expensesCtx = useContext(ExpensesContext);

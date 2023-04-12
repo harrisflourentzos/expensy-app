@@ -14,7 +14,6 @@ function ManageExpense({ route, navigation }: ManageExpenseStackScreenProps) {
   const editedExpenseId = route.params?.expenseId;
   const isEditing = !!editedExpenseId;
   const expense = expensesCtx.expenses.find((e) => e.id === editedExpenseId);
-  console.log(expense);
 
   useLayoutEffect(() => {
     navigation.setOptions({

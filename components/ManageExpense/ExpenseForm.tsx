@@ -1,9 +1,10 @@
-import { StyleSheet, View } from "react-native";
+import { Text, StyleSheet, View } from "react-native";
 import React, { useState } from "react";
 import Input from "./Input";
 import { IExpense, IExpenseItem } from "../../model/expense";
 import Button from "../UI/Button";
 import { getFormattedDate } from "../../util/date";
+import { GlobalStyles } from "../../constants/styles";
 
 type Props = {
   isEditing: boolean;
@@ -12,16 +13,16 @@ type Props = {
   onCancel: () => void;
 };
 
-enum ExpenseUpdateType {
+enum InputType {
   amount = "amount",
   date = "date",
-  description = "description",
+  desc = "description",
 }
 
-interface IExpenseUpdate {
-  [ExpenseUpdateType.amount]: string;
-  [ExpenseUpdateType.date]: string;
-  [ExpenseUpdateType.description]: string;
+interface IInput {
+  [InputType.amount]: { value: string; isValid: boolean };
+  [InputType.date]: { value: string; isValid: boolean };
+  [InputType.desc]: { value: string; isValid: boolean };
 }
 
 const ExpenseForm = ({
@@ -31,26 +32,54 @@ const ExpenseForm = ({
   onConfirm,
 }: Props) => {
   const Initial_State = {
-    amount: editingExpense ? editingExpense?.amount.toString() : "",
-    date: editingExpense ? getFormattedDate(editingExpense?.date) : "",
-    description: editingExpense ? editingExpense?.description : "",
-  } as IExpenseUpdate;
+    amount: {
+      value: editingExpense ? editingExpense?.amount.toString() : "",
+      isValid: true,
+    },
+    date: {
+      value: editingExpense ? getFormattedDate(editingExpense?.date) : "",
+      isValid: true,
+    },
+    description: {
+      value: editingExpense ? editingExpense?.description : "",
+      isValid: true,
+    },
+  } as IInput;
 
-  const [expenseUpdate, setExpenseUpdate] =
-    useState<IExpenseUpdate>(Initial_State);
+  const [input, setInput] = useState<IInput>(Initial_State);
 
-  function updateExpense(updateId: string, update: string) {
-    setExpenseUpdate((e) => {
-      return { ...e, [updateId]: update };
+  function updateExpenseInput(
+    updateId: InputType.amount | InputType.date | InputType.desc,
+    update: string
+  ) {
+    setInput((e) => {
+      return { ...e, [updateId]: { value: update, isValid: true } };
     });
   }
 
   function confirmHandler() {
-    const amount = parseInt(expenseUpdate.amount);
-    const date = new Date(expenseUpdate.date);
-    const description = expenseUpdate.description;
+    const amount = parseInt(input.amount.value);
+    const date = new Date(input.date.value);
+    const description = input.description.value.trim();
 
-    // Todo: VALIDATION
+    // check validity
+    const amountIsValid = !isNaN(amount) && amount > 0;
+    const dateIsValid = date.toString() !== "Invalid Date";
+    const descriptionIsValid = description.length > 0;
+
+    // update validity
+    setInput((e) => {
+      return {
+        amount: { value: input.amount.value, isValid: amountIsValid },
+        date: { value: input.date.value, isValid: dateIsValid },
+        description: {
+          value: input.description.value,
+          isValid: descriptionIsValid,
+        },
+      };
+    });
+
+    if (!(amountIsValid && dateIsValid && descriptionIsValid)) return;
 
     const expense = {
       amount: amount,
@@ -69,9 +98,11 @@ const ExpenseForm = ({
           label="Amount"
           textInputConfig={{
             keyboardType: "decimal-pad",
-            onChangeText: updateExpense.bind(this, ExpenseUpdateType.amount),
-            value: expenseUpdate.amount,
+            onChangeText: (text: string) =>
+              updateExpenseInput(InputType.amount, text),
+            value: input.amount.value,
           }}
+          isValid={input.amount.isValid}
         />
         <Input
           style={styles.rowInput}
@@ -79,9 +110,11 @@ const ExpenseForm = ({
           textInputConfig={{
             placeholder: "YYYY-MM-DD",
             maxLength: 10,
-            onChangeText: updateExpense.bind(this, ExpenseUpdateType.date),
-            value: expenseUpdate.date,
+            onChangeText: (text: string) =>
+              updateExpenseInput(InputType.date, text),
+            value: input.date.value,
           }}
+          isValid={input.date.isValid}
         />
       </View>
       <Input
@@ -89,10 +122,21 @@ const ExpenseForm = ({
         textInputConfig={{
           multiline: true,
           autoCorrect: false,
-          onChangeText: updateExpense.bind(this, ExpenseUpdateType.description),
-          value: expenseUpdate.description,
+          onChangeText: (text: string) =>
+            updateExpenseInput(InputType.desc, text),
+          value: input.description.value,
         }}
+        isValid={input.description.isValid}
       />
+      {!(
+        input.amount.isValid &&
+        input.date.isValid &&
+        input.description.isValid
+      ) && (
+        <View>
+          <Text style={styles.errorText}>Some of your inputs are invalid!</Text>
+        </View>
+      )}
       <View style={styles.buttons}>
         <Button style={styles.button} mode="flat" onPress={onCancel}>
           Cancel
@@ -119,6 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttons: {
+    marginTop: 20,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -126,5 +171,10 @@ const styles = StyleSheet.create({
   button: {
     minWidth: 120,
     marginHorizontal: 8,
+  },
+  errorText: {
+    marginTop: 10,
+    textAlign: "center",
+    color: GlobalStyles.colors.error500,
   },
 });
