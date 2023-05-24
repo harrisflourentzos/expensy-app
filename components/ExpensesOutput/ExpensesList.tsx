@@ -1,4 +1,4 @@
-import { FlatList, FlatListProps, ListRenderItem } from "react-native";
+import { FlatList } from "react-native";
 
 import ExpenseItem from "./ExpenseItem";
 import { IExpenseItem } from "../../model/expense";

@@ -6,9 +6,14 @@ import { GlobalStyles } from "../constants/styles";
 import { ExpensesContext } from "../store/expenses-context";
 import { ManageExpenseStackScreenProps } from "../navigation/types";
 import ExpenseForm from "../components/ManageExpense/ExpenseForm";
-import { IExpense } from "../model/expense";
+import { IExpense, IExpenseItem } from "../model/expense";
+import { deleteExpense, storeExpense, updateExpense } from "../util/http";
+import LoadingOverlay from "../components/UI/LoadingOverlay";
+import ErrorOverlay from "../components/UI/ErrorOverlay";
 
 function ManageExpense({ route, navigation }: ManageExpenseStackScreenProps) {
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState("");
   const expensesCtx = useContext(ExpensesContext);
 
   const editedExpenseId = route.params?.expenseId;
@@ -21,23 +26,53 @@ function ManageExpense({ route, navigation }: ManageExpenseStackScreenProps) {
     });
   }, [navigation, isEditing]);
 
-  function deleteExpenseHandler() {
-    expensesCtx.deleteExpense(editedExpenseId);
-    navigation.goBack();
+  async function deleteExpenseHandler() {
+    setIsFetching(true);
+    try {
+      await deleteExpense(editedExpenseId);
+      expensesCtx.deleteExpense(editedExpenseId);
+      navigation.goBack();
+    } catch (e: any) {
+      setError(e.any);
+      setIsFetching(false);
+    }
+  }
+
+  async function confirmHandler(expense: IExpense) {
+    setIsFetching(true);
+    if (isEditing) {
+      try {
+        await updateExpense(editedExpenseId, expense);
+        expensesCtx.updateExpense(editedExpenseId, expense);
+        navigation.goBack();
+      } catch (e: any) {
+        setError("Could not save changes to database!" + "\n" + e?.message);
+      }
+    } else {
+      try {
+        const id = await storeExpense(expense);
+        expensesCtx.addExpense({ ...expense, id: id } as IExpenseItem);
+        navigation.goBack();
+      } catch (e: any) {
+        setError("Could no save expense to database!" + "\n" + e?.message);
+      }
+    }
+    setIsFetching(false);
   }
 
   function cancelHandler() {
     navigation.goBack();
   }
 
-  function confirmHandler(expense: IExpense) {
-    if (isEditing) {
-      expensesCtx.updateExpense(editedExpenseId, expense);
-    } else {
-      expensesCtx.addExpense(expense);
-    }
+  function acknowledgeError() {
+    setError("");
     navigation.goBack();
   }
+
+  if (error && !isFetching)
+    return <ErrorOverlay message={error} onConfirm={acknowledgeError} />;
+
+  if (isFetching) return <LoadingOverlay />;
 
   return (
     <View style={styles.container}>

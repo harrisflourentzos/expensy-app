@@ -10,8 +10,8 @@ import { GlobalStyles } from "../../constants/styles";
 
 type Props = {
   children: JSX.Element | string;
-  onPress: () => void;
-  style: StyleProp<ViewStyle>;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
   mode?: "flat";
 };
 
